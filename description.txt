@@ -1,0 +1,11 @@
+Step 1. Gather list of organizations of a particular grouping (eg. Universities in Canada). 
+
+Step 2. For each organization, utilize Twitter API or other social media platform to gather tweets regarding the organization. 
+
+Step 3. Take the resulting tweets and comments and feed into IBM Watson's "Alchemy" Social Sentiment API. This API returns a sentiment score based on whether the tone of the input was positive or negative (or neutral). Keep track of the comments and the users that made the comments, in particular the ones of extreme sentiment (extremely positive or negative). Also note information regarding the user such as their follower count. 
+
+Step 5. Aggregate sentiment scores into an overall score for each organization. Comments may be weighted differently based on their users' follower counts (audience magnitude).
+
+Step 6. Present the scores on a web UI. The user can also see the extremely positive or negative comments, and the users that made them. Their follower counts are also available to see which demonstrate the impact of their comments. 
+
+In this scenario, this provides a tool for prospective university students to analyze the social reception of different universities to possibly help their decision of choosing which one to attend. In a different case, this could be used by an organization to see how they stack up against their competitors in the minds of the public. To take it further, the user could take actions to contact users with a high audience level that made a negative comment to request feedback on how they could improve. 
