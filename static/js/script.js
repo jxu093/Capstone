@@ -1,28 +1,70 @@
-$("#load-university").click(function() {
-	toggle_university_data();
+var schools;
+var restaurants;
+var tv_shows;
+var athletes;
+
+$.getJSON("/results/schools", function(result) {
+	schools = result;
 });
+$.getJSON("/results/restaurants", function(result) {
+	restaurants = result;
+});
+$.getJSON("/results/shows", function(result) {
+	tv_shows = result;
+});
+$.getJSON("/results/athletes", function(result) {
+	athletes = result;
+});
+
+var results;
 
 var rightArrowClass = "fa-angle-double-right";
 var downArrowClass = "fa-angle-double-down";
 
-var orgNameId = "#org-name";
-var orgDetailsId = "#org-details";
-var orgArrowId = "#org-name-arrow";
+var subjectNameId = "#subject-name";
+var subjectDetailsId = "#subject-details";
+var subjectArrowId = "#subject-name-arrow";
 
-$(orgNameId).click(function() {
-	var currentDisplay = $(orgDetailsId).css("display");
-	if (currentDisplay == "none") {
-		$(orgArrowId).removeClass(rightArrowClass);
-		$(orgArrowId).addClass(downArrowClass);
-		$(orgDetailsId).css("display", "block");
-	}
-	else {
-		$(orgArrowId).removeClass(downArrowClass);
-		$(orgArrowId).addClass(rightArrowClass);
-		$(orgDetailsId).css("display", "none");
-	}
-	
+$(document).ready(function() {
+	$("#load-university").click(function() {
+		toggle_data(1);
+	});
+	$("#load-food").click(function() {
+		toggle_data(2);
+	});
+	$("#load-tv").click(function() {
+		toggle_data(3);
+	});
+	$("#load-sports").click(function() {
+		toggle_data(4);
+	});
+
+	$(".subject-name").click(function() {
+		var currentId = $(this).attr("id").slice(-1);
+		var currentsubjectDetailsId = subjectDetailsId + currentId;
+		var currentsubjectArrowId = subjectArrowId + currentId;
+		var currentDisplay = $(currentsubjectDetailsId).css("display");
+		if (currentDisplay == "none") {
+			$(currentsubjectArrowId).removeClass(rightArrowClass);
+			$(currentsubjectArrowId).addClass(downArrowClass);
+			$(currentsubjectDetailsId).css("display", "block");
+		} else {
+			$(currentsubjectArrowId).removeClass(downArrowClass);
+			$(currentsubjectArrowId).addClass(rightArrowClass);
+			$(currentsubjectDetailsId).css("display", "none");
+		}
+	});
+
 });
+
+
+var rightArrowClass = "fa-angle-double-right";
+var downArrowClass = "fa-angle-double-down";
+
+var subjectNameId = "#subject-name";
+var subjectDetailsId = "#subject-details";
+var subjectArrowId = "#subject-name-arrow";
+
 
 // Closes the sidebar menu
 $("#menu-close").click(function(e) {
@@ -75,68 +117,112 @@ $(document).scroll(function() {
     }
 });
 
-var clicks = 0;
+var currentCollection = 0;
 
-function toggle_university_data() {
-	if (clicks==0) {
+function toggle_data(collection) {
+	if (collection==1) {
+		results = schools;
+	} else if (collection==2) {
+		results = restaurants;
+	} else if (collection==3) {
+		results = tv_shows;
+	} else if (collection==4) {
+		results = athletes;
+	}
+	if (collection!=currentCollection) {
+		currentCollection = collection;
+
+		$("#data-display .container").empty();
+
+		for (var i=0; i<results.length; i++) {
+			var thisTableHtml = tablesHtml.replace('subject-name-here', 'subject-name'+i);
+			thisTableHtml = thisTableHtml.replace('subject-details-here', 'subject-details'+i);
+			thisTableHtml = thisTableHtml.replace('graph-table-positive-here', 'graph-table-positive'+i);
+			thisTableHtml = thisTableHtml.replace('graph-table-negative-here', 'graph-table-negative'+i);
+			$("#data-display .container").append(thisTableHtml);
+		}
+
 		google.charts.load('current', {'packages':['table']});
-	    google.charts.setOnLoadCallback(drawTable);
+	    google.charts.setOnLoadCallback(drawTables);
 
-	    $("#org-details").css("display", "none");
+	    for (var i=0; i<results.length; i++) {
+	    	$(subjectDetailsId + i).css("display", "none");
 
-	    var org_name = "McMaster University";
+		    var subject_name = results[i]['subject'];
 
-	    $("#org-name").append("<h1>" + "<i class='fa fa-angle-double-right' aria-hidden='true' id='org-name-arrow'></i> " + org_name + "</h1>");
-	    var scoreIcon = "";
-	    if (results[0].score>0) {
-	    	scoreIcon = '<i class="fa fa-thumbs-o-up" aria-hidden="true"></i>';
+		    var scoreIcon = "";
+		    if (results[i].score>0) {
+		    	scoreIcon = '<i class="fa fa-thumbs-o-up" aria-hidden="true"></i>';
+		    }
+		    else {
+		    	scoreIcon = '<i class="fa fa-thumbs-o-down" aria-hidden="true"></i>';
+		    }
+
+		    $(subjectNameId + i).append("<h1 style='display:inline'>" + "<i class='fa fa-angle-double-right' aria-hidden='true' id='subject-name-arrow" + i + "'></i> " 
+		    	+ subject_name + "</h1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='subject-score'>" + "<span style='color:yellow'>Score:</span> " 
+		    	+ results[i].score + " " + scoreIcon + "</span>");
+		    
+		    $(subjectDetailsId + i).prepend(
+		    	// "Score: " 
+		    	// + results[i].score + " " + scoreIcon + "<br>" +
+		    	"Positive tweets: " 
+		    	+ results[i].positive.length + "<br>Negative tweets: "
+		    	+ results[i].negative.length + "<br>Neutral tweets (Not counted): " 
+		    	+ results[i].neutralCount + "<br><br>");
+
+		    $("#graph-table-positive" + i).before("<div>Most Impactful <em>Positive</em> Tweets</div>");
+		    $("#graph-table-negative" + i).before("<div>Most Impactful <em>Negative</em> Tweets</div>");
 	    }
-	    else {
-	    	scoreIcon = '<i class="fa fa-thumbs-o-down" aria-hidden="true"></i>';
-	    }
-	    $("#org-details").prepend("Score: " 
-	    	+ results[0].score + " " + scoreIcon + "<br>" + "Positive tweets: " 
-	    	+ results[0].positive.length + "<br>Negative tweets: "
-	    	+ results[0].negative.length + "<br>Neutral tweets (Not counted): " 
-	    	+ results[0].neutralCount + "<br><br>");
 
-	    $("#graph-table-positive").before("<div>Most Impactful <em>Positive</em> Tweets</div>");
-	    $("#graph-table-negative").before("<div>Most Impactful <em>Negative</em> Tweets</div>");
+	    // add click listener
+	    $(".subject-name").click(function() {
+			var currentId = $(this).attr("id").slice(-1);
+			var currentsubjectDetailsId = subjectDetailsId + currentId;
+			var currentsubjectArrowId = subjectArrowId + currentId;
+			var currentDisplay = $(currentsubjectDetailsId).css("display");
+			if (currentDisplay == "none") {
+				$(currentsubjectArrowId).removeClass(rightArrowClass);
+				$(currentsubjectArrowId).addClass(downArrowClass);
+				$(currentsubjectDetailsId).css("display", "block");
+			}
+			else {
+				$(currentsubjectArrowId).removeClass(downArrowClass);
+				$(currentsubjectArrowId).addClass(rightArrowClass);
+				$(currentsubjectDetailsId).css("display", "none");
+			}
+			
+		});
 	}
 	
-	clicks++;
+}
 
+function drawTables() {
+	for (var j=0; j<results.length; j++) {
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'User');
+		data.addColumn('number', 'Followers');
+		data.addColumn('string', 'Tweet');
+		data.addColumn('string', 'Score');
+
+		var data2 = new google.visualization.DataTable();
+		data2.addColumn('string', 'User');
+		data2.addColumn('number', 'Followers');
+		data2.addColumn('string', 'Tweet');
+		data2.addColumn('string', 'Score');
+
+		for (var i=0; i<10; i++) {
+			if (i<results[j].positive.length) data.addRow([results[j].positive[i].user, results[j].positive[i].followers, results[j].positive[i].tweet, results[j].positive[i].score]);
+			if (i<results[j].negative.length) data2.addRow([results[j].negative[i].user, results[j].negative[i].followers, results[j].negative[i].tweet, results[j].negative[i].score]);
+		}
+		
+		var table = new google.visualization.Table(document.getElementById('graph-table-positive' + j));
+		var table2 = new google.visualization.Table(document.getElementById('graph-table-negative' + j));
+
+		table.draw(data, {showRowNumber: true, width: '100%', height: '100%'});
+		table2.draw(data2, {showRowNumber: true, width: '100%', height: '100%'});
+	}
 }
 
 
-function drawTable() {
-	var data = new google.visualization.DataTable();
-	data.addColumn('string', 'User');
-	data.addColumn('number', 'Followers');
-	data.addColumn('string', 'Tweet');
-	data.addColumn('string', 'Score');
 
-	var data2 = new google.visualization.DataTable();
-	data2.addColumn('string', 'User');
-	data2.addColumn('number', 'Followers');
-	data2.addColumn('string', 'Tweet');
-	data2.addColumn('string', 'Score');
-
-	for (var i=0; i<10; i++) {
-		if (i<results[0].positive.length) data.addRow([results[0].positive[i].user, results[0].positive[i].followers, results[0].positive[i].tweet, results[0].positive[i].score]);
-		if (i<results[0].negative.length) data2.addRow([results[0].negative[i].user, results[0].negative[i].followers, results[0].negative[i].tweet, results[0].negative[i].score]);
-	}
-	
-	var table = new google.visualization.Table(document.getElementById('graph-table-positive'));
-	var table2 = new google.visualization.Table(document.getElementById('graph-table-negative'));
-
-	table.draw(data, {showRowNumber: true, width: '100%', height: '100%'});
-	table2.draw(data2, {showRowNumber: true, width: '100%', height: '100%'});
-}
-
-var results0 = JSON.parse('[ { \"negative\": [ { \"followers\": 11941, \"score\": \"-0.685895\", \"sentiment\": \"negative\", \"tweet\": \"Research conducted at McMaster University,ON will eliminate the need of annual flu shot.\\n\\nDr. Matthew Miller, an... https:\/\/t.co\/xRM7EdiKOK\", \"user\": \"PTC_Network\" }, { \"followers\": 7361, \"score\": \"-0.4423\", \"sentiment\": \"negative\", \"tweet\": \"RT @Zaganashikwe: Why were posters quite correctly linking alt-right to neo-Nazis removed at McMaster University? https:\/\/t.co\/YbpK61Cft1\", \"user\": \"KiranOpal\" }, { \"followers\": 3961, \"score\": \"-0.285185\", \"sentiment\": \"negative\", \"tweet\": \"#Researchers at #McMaster #University are developing a one-time #flue #vaccine \\n#cdnpoli #Hamilton #Ontario #Onpoli #topoli #GTA #Canada\", \"user\": \"alanacto2009\" }, { \"followers\": 2656, \"score\": \"-0.563631\", \"sentiment\": \"negative\", \"tweet\": \"@qui_oui Not really? McMaster has the dubious distinction of being the only Canadian university on the list, near as I can tell.\", \"user\": \"Bibliocracy\" }, { \"followers\": 2656, \"score\": \"-0.00211352\", \"sentiment\": \"negative\", \"tweet\": \"C\'mon Mac, we can do better than this\\u2026no Giroux? It\'s as if the Nazis aren\'t even trying. https:\/\/t.co\/wBKqqVnd01\", \"user\": \"Bibliocracy\" }, { \"followers\": 1853, \"score\": \"-0.525691\", \"sentiment\": \"negative\", \"tweet\": \"Do not go to McMaster University for anything software-related. My extremely Colin\'s Bear computer science degree has been totally worthless\", \"user\": \"SFtheWolf\" }, { \"followers\": 1731, \"score\": \"-0.223715\", \"sentiment\": \"negative\", \"tweet\": \"Wrestling 101 at McMaster University:\\n\\n-Eric Asselin\\n\\nhttps:\/\/t.co\/QlS4pz5Suj https:\/\/t.co\/LqAaN2jGIE\", \"user\": \"49NorthWrest\" }, { \"followers\": 1649, \"score\": \"-0.331796\", \"sentiment\": \"negative\", \"tweet\": \"Why were posters (quite correctly) linking alt-right to neo-Nazis removed at McMaster University? https:\/\/t.co\/YbpK61Cft1\", \"user\": \"Zaganashikwe\" }, { \"followers\": 1649, \"score\": \"-0.420272\", \"sentiment\": \"negative\", \"tweet\": \"Why were posters quite correctly linking alt-right to neo-Nazis removed at McMaster University? https:\/\/t.co\/YbpK61Cft1\", \"user\": \"Zaganashikwe\" }, { \"followers\": 850, \"score\": \"-0.771247\", \"sentiment\": \"negative\", \"tweet\": \"Bizarre: McMaster University rips down anti-nazi poster \'cause they weren\'t inclusive. https:\/\/t.co\/bd2ML0jQAa\", \"user\": \"Tom_Parkin_\" }, { \"followers\": 385, \"score\": \"-0.282504\", \"sentiment\": \"negative\", \"tweet\": \"So cancel your plans for the weekend You\'ll be taking that greyhound home @ McMaster University https:\/\/t.co\/pfRNN3LF1j\", \"user\": \"jonathan_mao\" }, { \"followers\": 312, \"score\": \"-0.336338\", \"sentiment\": \"negative\", \"tweet\": \"World Allergy Organization-McMaster University Guidelines for #Allergic Disease Prevention (GLAD-P): ... https:\/\/t.co\/yeaD32Lcf4 #waojournal\", \"user\": \"AGomez72803809\" }, { \"followers\": 139, \"score\": \"-0.686069\", \"sentiment\": \"negative\", \"tweet\": \"RT @PTC_Network: Research conducted at McMaster University,ON will eliminate the need of annual flu shot.\\n\\nDr. Matthew Miller, an... https:\\u2026\", \"user\": \"paligodara14\" }, { \"followers\": 80, \"score\": \"-0.0087128\", \"sentiment\": \"negative\", \"tweet\": \"RT @SFtheWolf: Do not go to McMaster University for anything software-related. My extremely Colin\'s Bear computer science degree has been t\\u2026\", \"user\": \"QUINTIX256\" }, { \"followers\": 16, \"score\": \"-0.417025\", \"sentiment\": \"negative\", \"tweet\": \"RT @SACHA_tweets: White supremacist alt-right recruiting posters put up at McMaster University. https:\/\/t.co\/yFl23DZ6lj\", \"user\": \"ihsansabrinaa\" }, { \"followers\": 1, \"score\": \"-0.543461\", \"sentiment\": \"negative\", \"tweet\": \"A team of researchers at McMaster University in Ontario are developing a \'universal\' flu vaccine ...\\n#flushot \\nhttps:\/\/t.co\/BoTOJj9Uio\", \"user\": \"A_real_Freeman\" } ], \"neutralCount\": 38, \"positive\": [ { \"followers\": 17052, \"score\": \"0.377265\", \"sentiment\": \"positive\", \"tweet\": \"Interested in joining a fast-growing industry? Explore @McMasterContEd\'s #DigitalMarketing Certificate program:\\u2026 https:\/\/t.co\/eJGypXPVu3\", \"user\": \"TalentEgg\" }, { \"followers\": 10161, \"score\": \"0.57218\", \"sentiment\": \"positive\", \"tweet\": \"RT @ltsmcmaster: We need YOUR help to allow children to explore the microscopic world!! #GivingTuesdayCA \\nFor more information https:\/\/t.co\\u2026\", \"user\": \"GivingTuesdayCa\" }, { \"followers\": 9879, \"score\": \"0.731765\", \"sentiment\": \"positive\", \"tweet\": \"We got University Hall, which is cool because we love history and it\'s one of the original six buildings on\\u2026 https:\/\/t.co\/JPlSeptwdM\", \"user\": \"McMasterAlumni\" }, { \"followers\": 4442, \"score\": \"0.255225\", \"sentiment\": \"positive\", \"tweet\": \"NHF-McMaster Guideline has been accepted. https:\/\/t.co\/Q7beud95Un\", \"user\": \"NHF_Hemophilia\" }, { \"followers\": 3723, \"score\": \"0.459577\", \"sentiment\": \"positive\", \"tweet\": \"Mcmaster University! We\'re here! https:\/\/t.co\/zVISvq1HDc\", \"user\": \"junyamenace\" }, { \"followers\": 3723, \"score\": \"0.251756\", \"sentiment\": \"positive\", \"tweet\": \"#BlackDiamond TOMORROW NIGHT inside Club Absinthe (Hamilton) McMaster University Charity Event!\\u2026 https:\/\/t.co\/lklUVfK6ta\", \"user\": \"junyamenace\" }, { \"followers\": 3136, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"mistydemeo\" }, { \"followers\": 2111, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"politiquestions\" }, { \"followers\": 1515, \"score\": \"0.673534\", \"sentiment\": \"positive\", \"tweet\": \"Cycle ONE Certification - Sun. Dec 4th - McMaster University, Hamilton ON https:\/\/t.co\/Zaqrwf9gne https:\/\/t.co\/YwVAI9mhOp\", \"user\": \"LibNorris\" }, { \"followers\": 1375, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"Llydisblur\" }, { \"followers\": 1260, \"score\": \"0.397711\", \"sentiment\": \"positive\", \"tweet\": \"McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! https:\/\/t.co\/bvzLoyIvYe\", \"user\": \"canadianlefty\" }, { \"followers\": 1213, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"EvenWeirderMove\" }, { \"followers\": 1212, \"score\": \"0.244895\", \"sentiment\": \"positive\", \"tweet\": \"Academic Neurologist: McMaster University (Hamilton): \\\"Hamilton Health Sciences invite applicants\\u2026 https:\/\/t.co\/bshUCdDOxZ #hamilton #jobs\", \"user\": \"HN_Top_Employer\" }, { \"followers\": 1085, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"DreddByDawn\" }, { \"followers\": 1050, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"RS_Benedict\" }, { \"followers\": 1029, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"millvsSPQR\" }, { \"followers\": 949, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"GaryWKinsman\" }, { \"followers\": 910, \"score\": \"0.317269\", \"sentiment\": \"positive\", \"tweet\": \"RT @NHF_Hemophilia: NHF-McMaster Guideline has been accepted. https:\/\/t.co\/Q7beud95Un\", \"user\": \"cohemo\" }, { \"followers\": 905, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"velartrill\" }, { \"followers\": 775, \"score\": \"0.390858\", \"sentiment\": \"positive\", \"tweet\": \"Join us!\\nMcMaster University W Booth School Innovation Showcase\\nDec. 8, 2016 | 6pm to 8pm\\nhttps:\/\/t.co\/lxbpZI6P2P @Eventbrite\", \"user\": \"WBoothSchool\" }, { \"followers\": 768, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"gokunaruto67\" }, { \"followers\": 730, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"CanadiEnby\" }, { \"followers\": 671, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"truthaddictVT\" }, { \"followers\": 490, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"SutterSane\" }, { \"followers\": 394, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"compasspoints\" }, { \"followers\": 391, \"score\": \"0.707635\", \"sentiment\": \"positive\", \"tweet\": \"Congrats on making it out of the friend zone 1.5 years ago!!! @ McMaster University https:\/\/t.co\/1fonTEzFcC\", \"user\": \"RebeccaDiemert\" }, { \"followers\": 383, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"nik_narcotic\" }, { \"followers\": 378, \"score\": \"0.317269\", \"sentiment\": \"positive\", \"tweet\": \"RT @NHF_Hemophilia: NHF-McMaster Guideline has been accepted. https:\/\/t.co\/Q7beud95Un\", \"user\": \"mainehemophilia\" }, { \"followers\": 313, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"quiggy\" }, { \"followers\": 298, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"Eerookah\" }, { \"followers\": 240, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"joe_no_body\" }, { \"followers\": 234, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"TrippliKit\" }, { \"followers\": 224, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"RaveerTruxton\" }, { \"followers\": 206, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"kaiguy87\" }, { \"followers\": 199, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"Olyphaunt\" }, { \"followers\": 198, \"score\": \"0.412908\", \"sentiment\": \"positive\", \"tweet\": \"We need YOUR help to allow children to explore the microscopic world!! #GivingTuesdayCA \\nFor more information\\u2026 https:\/\/t.co\/91APSf72ox\", \"user\": \"ltsmcmaster\" }, { \"followers\": 184, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"glamarre2\" }, { \"followers\": 176, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"BrinEileen\" }, { \"followers\": 167, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"vex0rian\" }, { \"followers\": 152, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"kerplunktehmunk\" }, { \"followers\": 99, \"score\": \"0.8019\", \"sentiment\": \"positive\", \"tweet\": \"RT @EO_GSEA: Greg DeLaunay is the founder of @Tron_Club and repping McMaster University at the #GSEATO2016. Good luck! https:\/\/t.co\/0PIm3Zj\\u2026\", \"user\": \"gregdelaunay\" }, { \"followers\": 68, \"score\": \"0.357278\", \"sentiment\": \"positive\", \"tweet\": \"#CMSWinter nice to see talented students from McMaster university will represent for winter conference\", \"user\": \"howtweetitisz\" }, { \"followers\": 64, \"score\": \"0.317269\", \"sentiment\": \"positive\", \"tweet\": \"RT @NHF_Hemophilia: NHF-McMaster Guideline has been accepted. https:\/\/t.co\/Q7beud95Un\", \"user\": \"SaraGBarcenilla\" }, { \"followers\": 54, \"score\": \"0.372273\", \"sentiment\": \"positive\", \"tweet\": \"An away loss for the Hawks but a lot of learning. Ryerson played amazing cricket. Up next McMaster University at... https:\/\/t.co\/lqEp3XrhZ8\", \"user\": \"lauriercricket\" }, { \"followers\": 44, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"PortiaTrash\" }, { \"followers\": 38, \"score\": \"0.602868\", \"sentiment\": \"positive\", \"tweet\": \"Producing neurons right here in Canada! Check out this fascinating research from McMaster University: \\nhttps:\/\/t.co\/ckV0Miy7qJ\", \"user\": \"HamiltonBrainB\" } ], \"score\": 9.25217468 } ]');
-
-var results = JSON.parse('[ { \"negative\": [ { \"followers\": 7364, \"score\": \"-0.4423\", \"sentiment\": \"negative\", \"tweet\": \"RT @Zaganashikwe: Why were posters quite correctly linking alt-right to neo-Nazis removed at McMaster University? https:\/\/t.co\/YbpK61Cft1\", \"user\": \"KiranOpal\" }, { \"followers\": 1853, \"score\": \"-0.525691\", \"sentiment\": \"negative\", \"tweet\": \"Do not go to McMaster University for anything software-related. My extremely Colin\'s Bear computer science degree has been totally worthless\", \"user\": \"SFtheWolf\" }, { \"followers\": 1731, \"score\": \"-0.223715\", \"sentiment\": \"negative\", \"tweet\": \"Wrestling 101 at McMaster University:\\n\\n-Eric Asselin\\n\\nhttps:\/\/t.co\/QlS4pz5Suj https:\/\/t.co\/LqAaN2jGIE\", \"user\": \"49NorthWrest\" }, { \"followers\": 1650, \"score\": \"-0.331796\", \"sentiment\": \"negative\", \"tweet\": \"Why were posters (quite correctly) linking alt-right to neo-Nazis removed at McMaster University? https:\/\/t.co\/YbpK61Cft1\", \"user\": \"Zaganashikwe\" }, { \"followers\": 1650, \"score\": \"-0.420272\", \"sentiment\": \"negative\", \"tweet\": \"Why were posters quite correctly linking alt-right to neo-Nazis removed at McMaster University? https:\/\/t.co\/YbpK61Cft1\", \"user\": \"Zaganashikwe\" }, { \"followers\": 1006, \"score\": \"-0.205294\", \"sentiment\": \"negative\", \"tweet\": \"Left Chapter: McMaster U and civility with neo Nazis https:\/\/t.co\/ZOY3OCQ5Gp\", \"user\": \"NDProots\" }, { \"followers\": 850, \"score\": \"-0.771247\", \"sentiment\": \"negative\", \"tweet\": \"Bizarre: McMaster University rips down anti-nazi poster \'cause they weren\'t inclusive. https:\/\/t.co\/bd2ML0jQAa\", \"user\": \"Tom_Parkin_\" }, { \"followers\": 80, \"score\": \"-0.0087128\", \"sentiment\": \"negative\", \"tweet\": \"RT @SFtheWolf: Do not go to McMaster University for anything software-related. My extremely Colin\'s Bear computer science degree has been t\\u2026\", \"user\": \"QUINTIX256\" } ], \"neutralCount\": 20, \"positive\": [ { \"followers\": 18631, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"tinysubversions\" }, { \"followers\": 17051, \"score\": \"0.377265\", \"sentiment\": \"positive\", \"tweet\": \"Interested in joining a fast-growing industry? Explore @McMasterContEd\'s #DigitalMarketing Certificate program:\\u2026 https:\/\/t.co\/eJGypXPVu3\", \"user\": \"TalentEgg\" }, { \"followers\": 10178, \"score\": \"0.57218\", \"sentiment\": \"positive\", \"tweet\": \"RT @ltsmcmaster: We need YOUR help to allow children to explore the microscopic world!! #GivingTuesdayCA \\nFor more information https:\/\/t.co\\u2026\", \"user\": \"GivingTuesdayCa\" }, { \"followers\": 9879, \"score\": \"0.731765\", \"sentiment\": \"positive\", \"tweet\": \"We got University Hall, which is cool because we love history and it\'s one of the original six buildings on\\u2026 https:\/\/t.co\/JPlSeptwdM\", \"user\": \"McMasterAlumni\" }, { \"followers\": 5587, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"iglvzx\" }, { \"followers\": 3722, \"score\": \"0.459577\", \"sentiment\": \"positive\", \"tweet\": \"Mcmaster University! We\'re here! https:\/\/t.co\/zVISvq1HDc\", \"user\": \"junyamenace\" }, { \"followers\": 3139, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"mistydemeo\" }, { \"followers\": 2779, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"sie_kensou77\" }, { \"followers\": 2225, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"RealDomRomeo\" }, { \"followers\": 2112, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"politiquestions\" }, { \"followers\": 1809, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"ty2010b\" }, { \"followers\": 1522, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"ralexstone\" }, { \"followers\": 1515, \"score\": \"0.673534\", \"sentiment\": \"positive\", \"tweet\": \"Cycle ONE Certification - Sun. Dec 4th - McMaster University, Hamilton ON https:\/\/t.co\/Zaqrwf9gne https:\/\/t.co\/YwVAI9mhOp\", \"user\": \"LibNorris\" }, { \"followers\": 1381, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"Llydisblur\" }, { \"followers\": 1259, \"score\": \"0.397711\", \"sentiment\": \"positive\", \"tweet\": \"McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! https:\/\/t.co\/bvzLoyIvYe\", \"user\": \"canadianlefty\" }, { \"followers\": 1213, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"EvenWeirderMove\" }, { \"followers\": 1212, \"score\": \"0.244896\", \"sentiment\": \"positive\", \"tweet\": \"Academic Neurologist: McMaster University (Hamilton): \\\"Hamilton Health Sciences invite applicants\\u2026 https:\/\/t.co\/bshUCdDOxZ #hamilton #jobs\", \"user\": \"HN_Top_Employer\" }, { \"followers\": 1085, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"DreddByDawn\" }, { \"followers\": 1063, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"DonSchlotman\" }, { \"followers\": 1051, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"RS_Benedict\" }, { \"followers\": 1029, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"millvsSPQR\" }, { \"followers\": 949, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"GaryWKinsman\" }, { \"followers\": 914, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"voyahora\" }, { \"followers\": 906, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"velartrill\" }, { \"followers\": 882, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"michelmcbride\" }, { \"followers\": 878, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"ragzouken\" }, { \"followers\": 865, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"Nexusdog_UK\" }, { \"followers\": 769, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"gokunaruto67\" }, { \"followers\": 730, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"CanadiEnby\" }, { \"followers\": 712, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"feraleddie\" }, { \"followers\": 671, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"truthaddictVT\" }, { \"followers\": 490, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"SutterSane\" }, { \"followers\": 393, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"compasspoints\" }, { \"followers\": 391, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"mgedmin\" }, { \"followers\": 383, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"nik_narcotic\" }, { \"followers\": 379, \"score\": \"0.267285\",' 
-+ ' \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"svente_fox\" }, { \"followers\": 348, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"bcjbcjbcj\" }, { \"followers\": 325, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"DevourerOfTime\" }, { \"followers\": 320, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"lee4hmz\" }, { \"followers\": 313, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"quiggy\" }, { \"followers\": 306, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"krveale\" }, { \"followers\": 298, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"Eerookah\" }, { \"followers\": 240, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"joe_no_body\" }, { \"followers\": 234, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"TrippliKit\" }, { \"followers\": 225, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"RaveerTruxton\" }, { \"followers\": 212, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"devoted_pupa\" }, { \"followers\": 206, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"kaiguy87\" }, { \"followers\": 201, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"punchcardsorter\" }, { \"followers\": 198, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"Olyphaunt\" }, { \"followers\": 198, \"score\": \"0.412908\", \"sentiment\": \"positive\", \"tweet\": \"We need YOUR help to allow children to explore the microscopic world!! #GivingTuesdayCA \\nFor more information\\u2026 https:\/\/t.co\/91APSf72ox\", \"user\": \"ltsmcmaster\" }, { \"followers\": 189, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"Ima_Ga_Saikou\" }, { \"followers\": 187, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"SoSaysBrutus\" }, { \"followers\": 184, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"glamarre2\" }, { \"followers\": 180, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"ironicwookie\" }, { \"followers\": 176, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"BrinEileen\" }, { \"followers\": 167, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"vex0rian\" }, { \"followers\": 151, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"kerplunktehmunk\" }, { \"followers\": 143, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"ARMcKiddy\" }, { \"followers\": 142, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"theunshaven\" }, { \"followers\": 136, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"_raincl0ud\" }, { \"followers\": 130, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"BillTheLoser\" }, { \"followers\": 125, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"rainaftersno\" }, { \"followers\": 121, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"clandestine\" }, { \"followers\": 92, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"ayelleyeess\" }, { \"followers\": 83, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"CaramelZappa\" }, { \"followers\": 79, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"osiris_saline\" }, { \"followers\": 70, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"Tendrin\" }, { \"followers\": 67, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"protacotrucks\" }, { \"followers\": 54, \"score\": \"0.372273\", \"sentiment\": \"positive\", \"tweet\": \"An away loss for the Hawks but a lot of learning. Ryerson played amazing cricket. Up next McMaster University at... https:\/\/t.co\/lqEp3XrhZ8\", \"user\": \"lauriercricket\" }, { \"followers\": 44, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"fefifofannibal\" }, { \"followers\": 44, \"score\": \"0.267285\", \"sentiment\": \"positive\", \"tweet\": \"RT @canadianlefty: McMaster University removes anti-Nazi posters because they \\\"do not reflect a welcoming and inclusive community\\\"!?!?! htt\\u2026\", \"user\": \"PortiaTrash\" }, { \"followers\": 38, \"score\": \"0.602868\", \"sentiment\": \"positive\", \"tweet\": \"Producing neurons right here in Canada! Check out this fascinating research from McMaster University: \\nhttps:\/\/t.co\/ckV0Miy7qJ\", \"user\": \"HamiltonBrainB\" } ], \"score\": 18.48761919999999 } ]');
-
-// results = JSON.parse(results);
+var tablesHtml = '<div id="subject-name-here" class="subject-name"></div><br><div id="subject-details-here"><div id="graph-table-positive-here"></div><br><div id="graph-table-negative-here"></div></div>'

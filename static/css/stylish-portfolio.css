@@ -200,13 +200,27 @@ hr.small {
 
 .portfolio-item {
     margin-bottom: 30px;
+    position: relative;
 }
 
-.inactive .img-portfolio{
+/*.inactive .img-portfolio{
     opacity: 0.4;
 }
 .inactive .img-portfolio:hover{
     opacity: 0.2;
+}*/
+
+.text-over-img {
+    position: absolute;
+    margin: auto;
+    top: 0;
+    left:0;
+    right:0;
+    bottom:0;
+
+    height:20px;
+    color: white;
+    font-size: 3em;
 }
 
 .img-portfolio {
@@ -234,6 +248,10 @@ hr.small {
 }
 .org-details {
     display: none;
+}
+
+.subject-score i {
+    font-size: 1.4em;
 }
 
 /* Footer */

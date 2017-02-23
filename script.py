@@ -1,7 +1,17 @@
 import requests
 from requests_oauthlib import OAuth1
-from watson_developer_cloud import AlchemyLanguageV1
+from watson_developer_cloud import AlchemyLanguageV1, WatsonException
 from operator import itemgetter
+import re
+import datetime
+
+
+# regex for emojis
+myre = re.compile(u'('
+    u'\ud83c[\udf00-\udfff]|'
+    u'\ud83d[\udc00-\ude4f\ude80-\udeff]|'
+    u'[\u2600-\u26FF\u2700-\u27BF])+',
+    re.UNICODE)
 
 
 oauth_consumer_key="oYAHgmB6rp38N0FbkgiUrUEMU"
@@ -9,7 +19,7 @@ oauth_consumer_secret="7TwDhGihkbYj0N1IzjncURQIXf4RfnLjyOzMiJP095zfnxT6Zq"
 oauth_access_token="493633798-Gr6DW1HSZP5Sqz4IJ5HPGmFxDJQ9zqm2qHgyhnVC"
 oauth_access_secret="6t5TT1kDSs8nuTHC3zC9nzSMY0c8vK5GPdLUPvIAgxGQg"
 
-watson_key = "41a26a160fde86a9a545f8aac84a8b494da69000"
+watson_key = "ef7f17d18f551bcb1ffa88902dbd3116f065d02e"
 alchemy_language = AlchemyLanguageV1(api_key=watson_key)
 
 
@@ -21,32 +31,39 @@ def get_oauth():
     return oauth
 
 
-universities = ["mcmaster university"]
-university_data = []
+return_data = []
 
 
-def get_data():
-    if len(university_data) == 0:
-        for u in universities:
-            university_data.append(twit_search(u))
+def get_data(subjects):
+    if len(return_data) == 0:
+        for s in subjects:
+            return_data.append(twit_search(s))
 
-    return university_data
+    return return_data
 
 
 def twit_search(query):
-    url = 'https://api.twitter.com/1.1/search/tweets.json?q='+query
+    url = 'https://api.twitter.com/1.1/search/tweets.json?q=' + requests.utils.quote(query)
     oauth = get_oauth()
     json_obj = requests.get(url, params={'count':100, 'lang': 'en'}, auth=oauth)
     data = json_obj.json()
 
-    tweet_list = {'positive': [], 'negative': [], 'neutralCount': 0, 'score': 0}
+    tweet_list = {'subject': query, 'positive': [], 'negative': [], 'neutralCount': 0, 'score': 0,
+                  '_id': query + str(datetime.date.today()), 'date' : datetime.date.today().isoformat()}
 
     for item in data['statuses']:
-        analysis = {'tweet': item['text'], 'user' : item['user']['screen_name'],
+        # strip emojis for compatibility with Watson
+        filtered_text = myre.sub('',item['text'])
+
+        analysis = {'_id': item['id'], 'tweet': filtered_text, 'user' : item['user']['screen_name'],
                     'followers': item['user']['followers_count']}
 
         # print item['user']['screen_name'], item['id_str']
-        sentiment = alchemy_language.sentiment(text=item['text'])
+        try:
+            sentiment = alchemy_language.sentiment(text=filtered_text)
+        except WatsonException as e:
+            print e
+            print "tweet: " + item['text']
         if sentiment['status'] == "OK":
             analysis['sentiment'] = sentiment['docSentiment']['type']
             if analysis['sentiment'] == "neutral":
