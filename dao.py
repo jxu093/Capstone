@@ -1,7 +1,14 @@
 from pymongo import MongoClient
+import os
 
-client = MongoClient('localhost', 27017)
-db = client.capstone_db
+mongo_user = os.environ['mongo_user']
+mongo_pass = os.environ['mongo_pass']
+mongo_address = os.environ['mongo_address']
+mongo_port = os.environ['mongo_port']
+mongo_dbname = os.environ['mongo_dbname']
+
+client = MongoClient('mongodb://' + mongo_user + ':' + mongo_pass + '@' + mongo_address + ':' + mongo_port)
+db = client[mongo_dbname]
 
 
 def save_tweets(data, collection):
