@@ -1,0 +1,1 @@
+configs = {'mongo_user': 'jazzmen', 'mongo_pass': 'jazz', 'mongo_address': 'ds151028.mlab.com', 'mongo_port': '51028', 'mongo_dbname': 'heroku_z9xhjdsd'}

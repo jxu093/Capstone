@@ -1,13 +1,22 @@
 from pymongo import MongoClient
-import os
 
-mongo_user = os.environ['mongo_user']
-mongo_pass = os.environ['mongo_pass']
-mongo_address = os.environ['mongo_address']
-mongo_port = os.environ['mongo_port']
-mongo_dbname = os.environ['mongo_dbname']
+try:
+    import config_file
+    mongo_user = config_file.configs['mongo_user']
+    mongo_pass = config_file.configs['mongo_pass']
+    mongo_address = config_file.configs['mongo_address']
+    mongo_port = config_file.configs['mongo_port']
+    mongo_dbname = config_file.configs['mongo_dbname']
+except ImportError:
+    import os
+    mongo_user = os.environ['mongo_user']
+    mongo_pass = os.environ['mongo_pass']
+    mongo_address = os.environ['mongo_address']
+    mongo_port = os.environ['mongo_port']
+    mongo_dbname = os.environ['mongo_dbname']
 
-client = MongoClient('mongodb://' + mongo_user + ':' + mongo_pass + '@' + mongo_address + ':' + mongo_port)
+
+client = MongoClient('mongodb://' + mongo_user + ':' + mongo_pass + '@' + mongo_address + ':' + mongo_port + '/' + mongo_dbname)
 db = client[mongo_dbname]
 
 
