@@ -20,6 +20,7 @@ def home():
 @app.route('/test/<name>')
 def test(name):
     session['testname'] = name
+    return testz()
 
 
 @app.route('/test')
