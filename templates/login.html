@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+    <!-- Style -->
+    <link rel="stylesheet" href="static/css/customstyle.css">
+</head>
+<body>
+    <form id="login-form" action="login" method="POST">
+        Username<br>
+        <input type="text" name="username" required><br>
+        Password<br>
+        <input type="password" name="password"><br><br>
+        <input type="hidden" name="action">
+        <button id="login-btn">Login</button><button id="register-btn">Register</button>
+    </form>
+    <br>
+    <div id="messagebox">{{message}}</div>
+
+    <script src="static/js/jquery.js"></script>
+    <script>
+        $("#login-btn").click(function(){
+            $("input[name=action]").val("login");
+            $("#login-form").submit();
+        });
+        $("#register-btn").click(function(){
+            $("input[name=action]").val("register");
+            $("#login-form").submit();
+        });
+    </script>
+</body>
+</html>

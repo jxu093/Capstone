@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Custom Searches</title>
+
+    <!-- Custom Fonts -->
+    <link href="static/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+    <!-- Style -->
+    <link rel="stylesheet" href="static/css/customstyle.css">
+    <!-- Google charts -->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <!-- Javascript -->
+    <script src="static/js/jquery.js"></script>
+    <script src="static/js/customscript.js"></script>
+
+</head>
+<body>
+<div id="header"></div>
+<div id="body">
+
+    {% if username %}
+    Welcome <i>{{username}}</i>
+    <br><br>
+    <form>
+        What topic would you like to search for?<br>
+        <input type="text" name="query"><br>
+        <button id="submit-btn">Search</button>
+    </form>
+    <br>
+    <div id="loader" style="display:none"><img src="static/img/ajax-loader.gif"></div>
+
+    <br><br><br>
+
+    <h3>Results</h3>
+    <br>
+    <a id="refresh" href="#">Refresh data</a>
+    <div id="data-display">
+        <div class="container"></div>
+    </div>
+
+    {% else %}
+
+    {% endif %}
+</div>
+
+
+</body>
+</html>

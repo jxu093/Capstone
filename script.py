@@ -19,7 +19,7 @@ oauth_consumer_secret="7TwDhGihkbYj0N1IzjncURQIXf4RfnLjyOzMiJP095zfnxT6Zq"
 oauth_access_token="493633798-Gr6DW1HSZP5Sqz4IJ5HPGmFxDJQ9zqm2qHgyhnVC"
 oauth_access_secret="6t5TT1kDSs8nuTHC3zC9nzSMY0c8vK5GPdLUPvIAgxGQg"
 
-watson_key = "ef7f17d18f551bcb1ffa88902dbd3116f065d02e"
+watson_key = "171322725ef4e50e113085542d3070e9ca4e0f00"
 alchemy_language = AlchemyLanguageV1(api_key=watson_key)
 
 

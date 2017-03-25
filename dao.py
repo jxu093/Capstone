@@ -45,3 +45,40 @@ def get_tweets(subjects, collection):
         results_list.append(res)
     return results_list
 
+
+def save_custom_data(data, username):
+    data['username'] = username
+    db['customdata'].insert(data)
+
+
+def get_custom_data(username):
+    results_list = []
+    res = db['customdata'].find({'username': username}).sort('date', -1)
+    # filter for one result per subject
+    if res.count() == 0:
+        res = None
+    else:
+        topic_set = set([])
+        for r in res:
+            if r['subject'] not in topic_set:
+                topic_set.add(r['subject'])
+                results_list.append(r)
+    return results_list
+
+
+def create_user(user):
+    existing_user = db['users'].find({'username': user['username']})
+    if existing_user.count() == 0:
+        db['users'].insert(user)
+        return 'user created'
+    else:
+        return 'user already exists'
+
+
+def get_user(username):
+    res = db['users'].find({'username': username})
+    if res.count() == 0:
+        res = None
+    else:
+        res = res[0]
+    return res
