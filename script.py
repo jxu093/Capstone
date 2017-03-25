@@ -52,8 +52,8 @@ def twit_search(query):
                   '_id': query + str(datetime.date.today()), 'date' : datetime.date.today().isoformat()}
 
     for item in data['statuses']:
-        # strip emojis for compatibility with Watson
-        filtered_text = myre.sub('',item['text'])
+        # strip emojis for compatibility with Watson and Ascii
+        filtered_text = myre.sub('',item['text']).encode('ascii', 'ignore')
 
         analysis = {'_id': item['id'], 'tweet': filtered_text, 'user' : item['user']['screen_name'],
                     'followers': item['user']['followers_count']}
