@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 import script
 import dao
 
 app = Flask(__name__)
+app.secret_key = 'aaBBccDDee'
 
 school_names = ['mcmaster university', 'brock university', 'university of toronto', 'university of waterloo']
 restaurant_names = ['lava pizza', 'boston pizza', 'tim hortons', 'taco del mar']
@@ -16,10 +17,17 @@ def home():
     return render_template('index.html')
 
 
-# @app.route('/results/universities')
-# def universities():
-#     data = script.get_data(['mcmaster university'])
-#     return jsonify(data)
+@app.route('/test/<name>')
+def test(name):
+    session['testname'] = name
+
+
+@app.route('/test')
+def testz():
+    if 'testname' in session:
+        return session['testname']
+    else:
+        return 'nothing found'
 
 
 @app.route('/results/<collection>')
