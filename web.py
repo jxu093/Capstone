@@ -41,8 +41,18 @@ def custom():
     return render_template('custom.html', username=session['username'])
 
 
+@app.route('/logout')
+def logout():
+    if 'username' in session:
+        session.pop('username', None)
+    return redirect('login')
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if 'username' in session:
+        return redirect('custom')
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']

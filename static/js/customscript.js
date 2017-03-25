@@ -10,6 +10,7 @@ var subjectArrowId = "#subject-name-arrow";
 $(document).ready(function(){
 	$.getJSON("/get-custom-data", function(result) {
 		results = result;
+		displayData();
 	});
 
 	$("#refresh").click(function(){
@@ -26,15 +27,12 @@ $(document).ready(function(){
 				// refresh display
 				$.getJSON("/get-custom-data", function(result) {
 					results = result;
+					displayData();
 				});
-				displayData();
 			});
 		}
 	})
 
-	// data display code 
-	displayData();
-	
 })
 function displayData() {
 	if (results!=null) {
