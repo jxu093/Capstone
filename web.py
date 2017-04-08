@@ -3,11 +3,13 @@ import hashlib
 import os
 import script
 import dao
+import re
 
 
 app = Flask(__name__)
 app.secret_key = 'aaBBccDDee'
 
+# preset topics
 school_names = ['mcmaster university', 'brock university', 'university of toronto', 'university of waterloo']
 restaurant_names = ['lava pizza', 'boston pizza', 'tim hortons', 'taco del mar']
 show_names = ['the walking dead', 'orange is the new black', 'grey\'s anatomy', 'vampire diaries']
@@ -18,20 +20,6 @@ names = {'schools': school_names, 'restaurants': restaurant_names, 'shows': show
 @app.route('/')
 def home():
     return render_template('index.html')
-
-
-# @app.route('/test/<name>')
-# def test(name):
-#     session['testname'] = name
-#     return testz()
-#
-#
-# @app.route('/test')
-# def testz():
-#     if 'testname' in session:
-#         return session['testname']
-#     else:
-#         return 'nothing found'
 
 
 @app.route('/custom')
@@ -57,19 +45,24 @@ def login():
         username = request.form['username']
         password = request.form['password']
         action = request.form['action']
-
+        # make new account
         if action == 'register':
+            # generate salt and hash for password
             salt = os.urandom(64)
             salt = salt.encode('base64')
             m = hashlib.md5()
             m.update(password + salt)
+            # store user in database
             message = dao.create_user({'username': username, 'hashedpass': m.hexdigest(), 'salt': salt})
             return render_template('login.html', message=message)
+        # login
         elif action == 'login':
+            # see if user exists
             existing_user = dao.get_user(username)
             if existing_user is None:
                 return render_template('login.html', message='username not found')
             else:
+                # see if hash of entered password matches what's stored
                 m = hashlib.md5()
                 m.update(password + existing_user['salt'])
                 if m.hexdigest() == existing_user['hashedpass']:
@@ -81,12 +74,14 @@ def login():
     return render_template('login.html')
 
 
+# get saved data for presets in json
 @app.route('/results/<collection>')
 def get_data(collection):
     data = dao.get_tweets(names[collection], collection)
     return jsonify(data)
 
 
+# run script to fetch new data for presets
 @app.route('/load-data/<collection>')
 def load_schools(collection):
     data = script.get_data(names[collection])
@@ -94,14 +89,19 @@ def load_schools(collection):
     return jsonify({'status': 'complete'})
 
 
+# run script to fetch new data for given topic
 @app.route('/load-custom-data/<topic>')
 def load_custom_data(topic):
+    # only run if a user is logged in
     if 'username' in session:
+        # sanitize input
+        topic = re.sub('[^0-9a-zA-Z -]+', '', topic)
         data = script.get_data([topic])
         dao.save_custom_data(data[0], session['username'])
         return jsonify({'status': 'complete'})
 
 
+# get the saved data for a custom topic
 @app.route('/get-custom-data')
 def get_custom_data():
     if 'username' in session:

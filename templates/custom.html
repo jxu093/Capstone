@@ -19,9 +19,10 @@
 <body>
 <div id="header"></div>
 <div id="body">
+    <a id="home-btn" href="/">Return Home</a><br>
 
     {% if username %}
-    Welcome <i>{{username}}</i>. &nbsp;&nbsp; <a href="logout" id="logout-btn">(Logout)</a>
+    Welcome <i style="font-size:1.2em">{{username}}</i>. &nbsp;&nbsp; <a href="logout" id="logout-btn">(Logout)</a>
     <br><br>
     <form>
         What topic would you like to search for?<br>
@@ -32,7 +33,7 @@
     <div id="loader" style="display:none"><img src="static/img/ajax-loader.gif"></div>
 
     <br><br><br>
-
+    <hr>
     <h3>Results</h3>
     <br>
     <a id="refresh" href="#">Refresh data</a>

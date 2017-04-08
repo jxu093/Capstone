@@ -3,6 +3,7 @@ var restaurants;
 var tv_shows;
 var athletes;
 
+// load json data for presets into memory
 $.getJSON("/results/schools", function(result) {
 	schools = result;
 });
@@ -26,6 +27,7 @@ var subjectDetailsId = "#subject-details";
 var subjectArrowId = "#subject-name-arrow";
 
 $(document).ready(function() {
+	// listeners for each preset topic
 	$("#load-university").click(function() {
 		toggle_data(1);
 	});
@@ -38,23 +40,23 @@ $(document).ready(function() {
 	$("#load-sports").click(function() {
 		toggle_data(4);
 	});
-
-	$(".subject-name").click(function() {
-		var currentId = $(this).attr("id").slice(-1);
-		var currentsubjectDetailsId = subjectDetailsId + currentId;
-		var currentsubjectArrowId = subjectArrowId + currentId;
-		var currentDisplay = $(currentsubjectDetailsId).css("display");
-		if (currentDisplay == "none") {
-			$(currentsubjectArrowId).removeClass(rightArrowClass);
-			$(currentsubjectArrowId).addClass(downArrowClass);
-			$(currentsubjectDetailsId).css("display", "block");
-		} else {
-			$(currentsubjectArrowId).removeClass(downArrowClass);
-			$(currentsubjectArrowId).addClass(rightArrowClass);
-			$(currentsubjectDetailsId).css("display", "none");
-		}
-	});
-
+	addListener();
+	// $(".subject-name").click(function() {
+	// 	var currentId = $(this).attr("id").slice(-1);
+	// 	var currentsubjectDetailsId = subjectDetailsId + currentId;
+	// 	var currentsubjectArrowId = subjectArrowId + currentId;
+	// 	var currentDisplay = $(currentsubjectDetailsId).css("display");
+	// 	// display data
+	// 	if (currentDisplay == "none") {
+	// 		$(currentsubjectArrowId).removeClass(rightArrowClass);
+	// 		$(currentsubjectArrowId).addClass(downArrowClass);
+	// 		$(currentsubjectDetailsId).css("display", "block");
+	// 	} else { // hide data
+	// 		$(currentsubjectArrowId).removeClass(downArrowClass);
+	// 		$(currentsubjectArrowId).addClass(rightArrowClass);
+	// 		$(currentsubjectDetailsId).css("display", "none");
+	// 	}
+	// });
 });
 
 
@@ -120,6 +122,7 @@ $(document).scroll(function() {
 var currentCollection = 0;
 
 function toggle_data(collection) {
+	// set results var to corresponding data to be displayed
 	if (collection==1) {
 		results = schools;
 	} else if (collection==2) {
@@ -131,73 +134,82 @@ function toggle_data(collection) {
 	}
 	if (collection!=currentCollection) {
 		currentCollection = collection;
-
+		// reset display container
 		$("#data-display .container").empty();
-
+		// iterate through results and generate the HTML based on the template
 		for (var i=0; i<results.length; i++) {
 			var thisTableHtml = tablesHtml.replace('subject-name-here', 'subject-name'+i);
 			thisTableHtml = thisTableHtml.replace('subject-details-here', 'subject-details'+i);
 			thisTableHtml = thisTableHtml.replace('graph-table-positive-here', 'graph-table-positive'+i);
 			thisTableHtml = thisTableHtml.replace('graph-table-negative-here', 'graph-table-negative'+i);
+			// add new HTML to page DOM
 			$("#data-display .container").append(thisTableHtml);
 		}
-
-		google.charts.load('current', {'packages':['table']});
-	    google.charts.setOnLoadCallback(drawTables);
-
-	    for (var i=0; i<results.length; i++) {
-	    	$(subjectDetailsId + i).css("display", "none");
-
-		    var subject_name = results[i]['subject'];
-
-		    var scoreIcon = "";
-		    if (results[i].score>0) {
-		    	scoreIcon = '<i class="fa fa-thumbs-o-up" aria-hidden="true"></i>';
-		    }
-		    else {
-		    	scoreIcon = '<i class="fa fa-thumbs-o-down" aria-hidden="true"></i>';
-		    }
-
-		    $(subjectNameId + i).append("<h1 style='display:inline'>" + "<i class='fa fa-angle-double-right' aria-hidden='true' id='subject-name-arrow" + i + "'></i> " 
-		    	+ subject_name + "</h1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='subject-score'>" + "<span style='color:yellow'>Score:</span> " 
-		    	+ results[i].score + " " + scoreIcon + "</span>");
-		    
-		    $(subjectDetailsId + i).prepend(
-		    	// "Score: " 
-		    	// + results[i].score + " " + scoreIcon + "<br>" +
-		    	"Positive tweets: " 
-		    	+ results[i].positive.length + "<br>Negative tweets: "
-		    	+ results[i].negative.length + "<br>Neutral tweets (Not counted): " 
-		    	+ results[i].neutralCount + "<br><br>");
-
-		    $("#graph-table-positive" + i).before("<div>Most Impactful <em>Positive</em> Tweets</div>");
-		    $("#graph-table-negative" + i).before("<div>Most Impactful <em>Negative</em> Tweets</div>");
-	    }
-
-	    // add click listener
-	    $(".subject-name").click(function() {
-			var currentId = $(this).attr("id").slice(-1);
-			var currentsubjectDetailsId = subjectDetailsId + currentId;
-			var currentsubjectArrowId = subjectArrowId + currentId;
-			var currentDisplay = $(currentsubjectDetailsId).css("display");
-			if (currentDisplay == "none") {
-				$(currentsubjectArrowId).removeClass(rightArrowClass);
-				$(currentsubjectArrowId).addClass(downArrowClass);
-				$(currentsubjectDetailsId).css("display", "block");
-			}
-			else {
-				$(currentsubjectArrowId).removeClass(downArrowClass);
-				$(currentsubjectArrowId).addClass(rightArrowClass);
-				$(currentsubjectDetailsId).css("display", "none");
-			}
-			
-		});
+		
+		addContent();
+	    addListener();
 	}
 	
 }
 
+function addContent() {
+	// call google charts API
+	google.charts.load('current', {'packages':['table']});
+    google.charts.setOnLoadCallback(drawTables);
+
+    for (var i=0; i<results.length; i++) {
+    	// Tables hidden to start
+    	$(subjectDetailsId + i).css("display", "none");
+
+	    var subject_name = results[i]['subject'];
+	    // Put thumbs up or down based on score
+	    var scoreIcon = "";
+	    if (results[i].score>0) {
+	    	scoreIcon = '<i class="fa fa-thumbs-o-up" aria-hidden="true"></i>';
+	    } else {
+	    	scoreIcon = '<i class="fa fa-thumbs-o-down" aria-hidden="true"></i>';
+	    }
+	    // Insert the score
+	    $(subjectNameId + i).append("<h1 style='display:inline'>" + "<i class='fa fa-angle-double-right' aria-hidden='true' id='subject-name-arrow" + i + "'></i> " 
+	    	+ subject_name + "</h1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='subject-score'>" + "<span style='color:yellow'>Score:</span> " 
+	    	+ results[i].score + " " + scoreIcon + "</span>");
+	    // Insert summary of tweet results
+	    $(subjectDetailsId + i).prepend(
+	    	"Positive tweets: " 
+	    	+ results[i].positive.length + "<br>Negative tweets: "
+	    	+ results[i].negative.length + "<br>Neutral tweets (Not counted): " 
+	    	+ results[i].neutralCount + "<br><br>");
+	    // Insert labels
+	    $("#graph-table-positive" + i).before("<div>Most Impactful <em>Positive</em> Tweets</div>");
+	    $("#graph-table-negative" + i).before("<div>Most Impactful <em>Negative</em> Tweets</div>");
+    }
+}
+
+function addListener() {
+	// add click listener
+	// listener for a particular subject (eg. the walking dead, lebron james, etc.)
+    $(".subject-name").click(function() {
+		var currentId = $(this).attr("id").slice(-1);
+		var currentsubjectDetailsId = subjectDetailsId + currentId;
+		var currentsubjectArrowId = subjectArrowId + currentId;
+		var currentDisplay = $(currentsubjectDetailsId).css("display");
+		// Show data
+		if (currentDisplay == "none") {
+			$(currentsubjectArrowId).removeClass(rightArrowClass);
+			$(currentsubjectArrowId).addClass(downArrowClass);
+			$(currentsubjectDetailsId).css("display", "block");
+		} else { // Hide data
+			$(currentsubjectArrowId).removeClass(downArrowClass);
+			$(currentsubjectArrowId).addClass(rightArrowClass);
+			$(currentsubjectDetailsId).css("display", "none");
+		}
+	});
+}
+
 function drawTables() {
+	// Draw positive and negative tweet tables for each search result
 	for (var j=0; j<results.length; j++) {
+		// Set columns
 		var data = new google.visualization.DataTable();
 		data.addColumn('string', 'User');
 		data.addColumn('number', 'Followers');
@@ -209,7 +221,7 @@ function drawTables() {
 		data2.addColumn('number', 'Followers');
 		data2.addColumn('string', 'Tweet');
 		data2.addColumn('string', 'Score');
-
+		// Display top 10 results in table
 		for (var i=0; i<10; i++) {
 			if (i<results[j].positive.length) data.addRow([results[j].positive[i].user, results[j].positive[i].followers, results[j].positive[i].tweet, results[j].positive[i].score]);
 			if (i<results[j].negative.length) data2.addRow([results[j].negative[i].user, results[j].negative[i].followers, results[j].negative[i].tweet, results[j].negative[i].score]);
@@ -224,5 +236,5 @@ function drawTables() {
 }
 
 
-
+// HTML table display template
 var tablesHtml = '<div id="subject-name-here" class="subject-name"></div><br><div id="subject-details-here"><div id="graph-table-positive-here"></div><br><div id="graph-table-negative-here"></div></div>'

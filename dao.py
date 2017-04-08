@@ -1,12 +1,14 @@
 from pymongo import MongoClient
 
+# try to import database server info from config file if it exists
+# otherwise load from environment variables
 try:
     import config_file
-    mongo_user = config_file.configs['mongo_user']
-    mongo_pass = config_file.configs['mongo_pass']
-    mongo_address = config_file.configs['mongo_address']
-    mongo_port = config_file.configs['mongo_port']
-    mongo_dbname = config_file.configs['mongo_dbname']
+    mongo_user = config_file.mongo_configs['mongo_user']
+    mongo_pass = config_file.mongo_configs['mongo_pass']
+    mongo_address = config_file.mongo_configs['mongo_address']
+    mongo_port = config_file.mongo_configs['mongo_port']
+    mongo_dbname = config_file.mongo_configs['mongo_dbname']
 except ImportError:
     import os
     mongo_user = os.environ['mongo_user']
@@ -46,11 +48,13 @@ def get_tweets(subjects, collection):
     return results_list
 
 
+# save new data for custom topic
 def save_custom_data(data, username):
     data['username'] = username
     db['customdata'].insert(data)
 
 
+# load saved data for custom topic
 def get_custom_data(username):
     results_list = []
     res = db['customdata'].find({'username': username}).sort('date', -1)
@@ -66,6 +70,7 @@ def get_custom_data(username):
     return results_list
 
 
+# save new user to database
 def create_user(user):
     existing_user = db['users'].find({'username': user['username']})
     if existing_user.count() == 0:
@@ -75,6 +80,7 @@ def create_user(user):
         return 'user already exists'
 
 
+# load existing user
 def get_user(username):
     res = db['users'].find({'username': username})
     if res.count() == 0:
