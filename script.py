@@ -59,7 +59,7 @@ def twit_search(query):
     data = json_obj.json()
 
     tweet_list = {'subject': query, 'positive': [], 'negative': [], 'neutralCount': 0, 'score': 0,
-                  '_id': query + str(datetime.date.today()), 'date' : datetime.date.today().isoformat()}
+                  '_id': query + str(datetime.datetime.today()), 'date' : datetime.date.today().isoformat()}
 
     for item in data['statuses']:
         # strip emojis for compatibility with Watson and Ascii
@@ -75,7 +75,7 @@ def twit_search(query):
         except WatsonException as e:
             # Watson error, print to stdout and move on to next tweet
             print e
-            print "tweet: " + item['text']
+            print "tweet: " + item['text'].encode('utf-8')
         if sentiment['status'] == "OK":
             analysis['sentiment'] = sentiment['docSentiment']['type']
             if analysis['sentiment'] == "neutral":
