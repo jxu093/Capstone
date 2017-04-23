@@ -76,6 +76,7 @@ def twit_search(query):
             # Watson error, print to stdout and move on to next tweet
             print e
             print "tweet: " + item['text'].encode('utf-8')
+            continue
         if sentiment['status'] == "OK":
             analysis['sentiment'] = sentiment['docSentiment']['type']
             if analysis['sentiment'] == "neutral":
